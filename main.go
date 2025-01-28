@@ -125,6 +125,7 @@ func listChats() {
 
 		// Print the row
 		fmt.Printf(strings.Repeat("%s ", len(columns)-1)+"%s\n", values...)
+	}
 
 }
 
