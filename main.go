@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 	"sync"
+	"strconv"
 )
 
 func listChats() {
@@ -22,9 +23,9 @@ func listChats() {
 
     for chatID, chat := range chatHistory {
         var lastUserMessage string
-        for i := len(messages) - 1; i >= 0; i-- {
-            if messages[i].Role == "user" {
-                lastUserMessage = messages[i].Content
+        for i := len(chat.Messages) - 1; i >= 0; i-- {
+            if chat.Messages[i].Role == "user" {
+                lastUserMessage = chat.Messages[i].Content
                 break
             }
         }
@@ -209,7 +210,7 @@ func main() {
 	// Build request body
 	requestBody := RequestBody{
 		Model:    *model,
-		Messages: messages,
+		Messages: chat.Messages,
 		Stream:   true,
 	}
 
