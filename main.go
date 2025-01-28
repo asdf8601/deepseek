@@ -29,10 +29,14 @@ func listChats() {
                 break
             }
         }
+        asterisk := ""
+        if chatID == lastChatID {
+            asterisk = "*"
+        }
         if lastUserMessage != "" {
-            fmt.Printf("Chat ID: %s, Last user message: %s\n", chatID, lastUserMessage)
+            fmt.Printf("Chat ID: %s%s, Created At: %s, Last user message: %s\n", chatID, asterisk, chat.CreatedAt.Format(time.RFC3339), lastUserMessage)
         } else {
-            fmt.Printf("Chat ID: %s, No user messages.\n", chatID)
+            fmt.Printf("Chat ID: %s%s, Created At: %s, No user messages.\n", chatID, asterisk, chat.CreatedAt.Format(time.RFC3339))
         }
     }
 }
