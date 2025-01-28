@@ -357,9 +357,19 @@ func main() {
 			},
 		}
 	}
-	// Limit the context to the last N messages
-	if len(chat.Messages) > *contextLimit {
+	// Ensure the last system role message is included
+	var systemMessage Message
+	for _, msg := range chat.Messages {
+		if msg.Role == "system" {
+			systemMessage = msg
+			break
+		}
+	}
+
+	// Limit the context to the last N messages plus the system message
+	if len(chat.Messages) > *contextLimit+1 {
 		chat.Messages = chat.Messages[len(chat.Messages)-*contextLimit:]
+		chat.Messages = append([]Message{systemMessage}, chat.Messages...)
 	}
 	chat.Messages = append(chat.Messages, Message{Role: "user", Content: prompt})
 	chatHistory[*chatID] = chat
