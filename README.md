@@ -32,3 +32,27 @@ go run main.go -chat abc123 "Continue specific chat"
 - Persistent chat history
 - Streaming responses
 - Multiple conversation support
+- Cross-platform binaries available for Linux, macOS and Windows
+
+## Installation
+
+Download the latest binary for your platform from the [releases page](https://github.com/asdf8601/deepseek/releases).
+
+### Quick install
+
+```bash
+# Linux AMD64
+curl -LO $(curl -s https://api.github.com/repos/asdf8601/deepseek/releases/latest | grep browser_download_url | grep linux-amd64 | cut -d '"' -f 4)
+chmod +x deepseek-linux-amd64
+sudo mv deepseek-linux-amd64 /usr/local/bin/deepseek
+
+# macOS AMD64
+curl -LO $(curl -s https://api.github.com/repos/asdf8601/deepseek/releases/latest | grep browser_download_url | grep darwin-amd64 | cut -d '"' -f 4)
+chmod +x deepseek-darwin-amd64
+sudo mv deepseek-darwin-amd64 /usr/local/bin/deepseek
+
+# macOS ARM64 (Apple Silicon)
+curl -LO $(curl -s https://api.github.com/repos/asdf8601/deepseek/releases/latest | grep browser_download_url | grep darwin-arm64 | cut -d '"' -f 4)
+chmod +x deepseek-darwin-arm64
+sudo mv deepseek-darwin-arm64 /usr/local/bin/deepseek
+```

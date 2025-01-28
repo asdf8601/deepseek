@@ -1,0 +1,34 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          
+      - name: Build
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o deepseek-linux-amd64 main.go
+          GOOS=darwin GOARCH=amd64 go build -o deepseek-darwin-amd64 main.go
+          GOOS=darwin GOARCH=arm64 go build -o deepseek-darwin-arm64 main.go
+          GOOS=windows GOARCH=amd64 go build -o deepseek-windows-amd64.exe main.go
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            deepseek-linux-amd64
+            deepseek-darwin-amd64
+            deepseek-darwin-arm64
+            deepseek-windows-amd64.exe
+          generate_release_notes: true
