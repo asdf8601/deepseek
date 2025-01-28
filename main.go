@@ -276,6 +276,10 @@ func main() {
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
 	flag.Parse()
 	// Check if the -status flag was passed
+	if *checkStatus {
+		checkServiceStatus()
+		return
+	}
 	if *checkModels {
 		listDeepseekModels()
 		return
