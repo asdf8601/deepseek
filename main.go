@@ -11,34 +11,34 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
-	"time"
-	"sync"
 	"strconv"
+	"strings"
+	"sync"
+	"time"
 )
 
 func listChats() {
-    mutex.Lock()
-    defer mutex.Unlock()
+	mutex.Lock()
+	defer mutex.Unlock()
 
-    for chatID, chat := range chatHistory {
-        var lastUserMessage string
-        for i := len(chat.Messages) - 1; i >= 0; i-- {
-            if chat.Messages[i].Role == "user" {
-                lastUserMessage = chat.Messages[i].Content
-                break
-            }
-        }
-        asterisk := ""
-        if chatID == lastChatID {
-            asterisk = "*"
-        }
-        if lastUserMessage != "" {
-            fmt.Printf("Chat ID: %s%s, Created At: %s, Last user message: %s\n", chatID, asterisk, chat.CreatedAt.Format(time.RFC3339), lastUserMessage)
-        } else {
-            fmt.Printf("Chat ID: %s%s, Created At: %s, No user messages.\n", chatID, asterisk, chat.CreatedAt.Format(time.RFC3339))
-        }
-    }
+	for chatID, chat := range chatHistory {
+		var lastUserMessage string
+		for i := len(chat.Messages) - 1; i >= 0; i-- {
+			if chat.Messages[i].Role == "user" {
+				lastUserMessage = chat.Messages[i].Content
+				break
+			}
+		}
+		asterisk := ""
+		if chatID == lastChatID {
+			asterisk = "*"
+		}
+		if lastUserMessage != "" {
+			fmt.Printf("Chat ID: %s%s, Created At: %s, Last user message: %s\n", chatID, asterisk, chat.CreatedAt.Format(time.RFC3339), lastUserMessage)
+		} else {
+			fmt.Printf("Chat ID: %s%s, Created At: %s, No user messages.\n", chatID, asterisk, chat.CreatedAt.Format(time.RFC3339))
+		}
+	}
 }
 
 var (
@@ -87,8 +87,8 @@ func loadHistory() {
 		fmt.Println("Error parsing history file:", err)
 		return
 	}
-chatHistory = make(map[string]Chat)
-if config.History != nil {
+	chatHistory = make(map[string]Chat)
+	if config.History != nil {
 		chatHistory = config.History
 	} else {
 		chatHistory = make(map[string]Chat)
@@ -165,15 +165,15 @@ func main() {
 
 	// Check if the -rm flag was passed
 	if *removeChat != "" {
-	    removeChats(*removeChat)
-	    saveHistory()
-	    return
+		removeChats(*removeChat)
+		saveHistory()
+		return
 	}
 
 	// Check if the -ls flag was passed
 	if *listChatsFlag {
-	    listChats()
-	    return
+		listChats()
+		return
 	}
 
 	// Read API token from environment variable
