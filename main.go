@@ -160,7 +160,15 @@ func main() {
 	newChat := flag.Bool("new", false, "Create a new conversation")
 	verbose := flag.Bool("v", false, "Verbose output")
 	listChatsFlag := flag.Bool("ls", false, "List all chats and their last message")
+	removeChat := flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
 	flag.Parse()
+
+	// Check if the -rm flag was passed
+	if *removeChat != "" {
+	    removeChats(*removeChat)
+	    saveHistory()
+	    return
+	}
 
 	// Check if the -ls flag was passed
 	if *listChatsFlag {
