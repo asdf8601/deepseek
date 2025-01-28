@@ -17,64 +17,117 @@ import (
 	"time"
 )
 
+// Define una estructura para las columnas con toda la información necesaria
+type column struct {
+    id       string
+    name     string
+    format   string
+    width    int
+    getValue func(asterisk string, chatId string, age time.Duration, created string, lastMsg string) string
+}
+
 func listChats() {
-	mutex.Lock()
-	defer mutex.Unlock()
+    mutex.Lock()
+    defer mutex.Unlock()
 
-	type column struct {
-		name   string
-		format string
-	}
-	columns := []column{
-		{"", "%-2s"},                   // Asterisk
-		{"CHAT ID", "%-18s"},           // Chat ID
-		{"AGE", "%-10s"},               // Age
-		{"CREATED AT", "%-20s"},        // Created At
-		{"LAST USER MESSAGE", "%-30s"}, // Last User Message
-	}
+    // Define las columnas y su orden
+    columns := []column{
+        {
+            id:     "asterisk",
+            name:   "",
+            format: "%-2s",
+            width:  2,
+            getValue: func(asterisk, _, _, _, _ string) string {
+                return asterisk
+            },
+        },
+        {
+            id:     "chat_id",
+            name:   "CHAT ID",
+            format: "%-18s",
+            width:  18,
+            getValue: func(_, chatId, _, _, _ string) string {
+                return chatId
+            },
+        },
+        {
+            id:     "age",
+            name:   "AGE",
+            format: "%-10s",
+            width:  10,
+            getValue: func(_, _, age, _, _ string) string {
+                return age
+            },
+        },
+        {
+            id:     "created_at",
+            name:   "CREATED AT",
+            format: "%-20s",
+            width:  20,
+            getValue: func(_, _, _, created, _ string) string {
+                return created
+            },
+        },
+        {
+            id:     "last_message",
+            name:   "LAST USER MESSAGE",
+            format: "%-30s",
+            width:  30,
+            getValue: func(_, _, _, _, lastMsg string) string {
+                return lastMsg
+            },
+        },
+    }
 
-	// Build format string
-	headers := make([]string, len(columns))
-	tableFmt := ""
-	for i, col := range columns {
-		headers[i] += fmt.Sprintf(col.format, col.name)
-		tableFmt += col.format + " "
-	}
-	tableFmt += "\n"
-	fmt.Println(strings.Join(headers, " "))
+    // Build format string and print headers
+    headers := make([]string, len(columns))
+    values := make([]interface{}, len(columns))
+    for i, col := range columns {
+        headers[i] = fmt.Sprintf(col.format, col.name)
+    }
+    fmt.Println(strings.Join(headers, " "))
 
-	// Convert map to slice for sorting
-	type chatEntry struct {
-		id   string
-		chat Chat
-	}
-	var chats []chatEntry
-	for id, chat := range chatHistory {
-		chats = append(chats, chatEntry{id, chat})
-	}
+    // Convert map to slice for sorting
+    type chatEntry struct {
+        id   string
+        chat Chat
+    }
+    var chats []chatEntry
+    for id, chat := range chatHistory {
+        chats = append(chats, chatEntry{id, chat})
+    }
 
-	// Sort by creation time, newest first
-	sort.Slice(chats, func(i, j int) bool {
-		return chats[i].chat.CreatedAt.After(chats[j].chat.CreatedAt)
-	})
+    // Sort by creation time, newest first
+    sort.Slice(chats, func(i, j int) bool {
+        return chats[i].chat.CreatedAt.After(chats[j].chat.CreatedAt)
+    })
 
-	for _, entry := range chats {
-		var lastUserMessage string
-		for i := len(entry.chat.Messages) - 1; i >= 0; i-- {
-			if entry.chat.Messages[i].Role == "user" {
-				lastUserMessage = entry.chat.Messages[i].Content
-				break
-			}
-		}
-		asterisk := ""
-		if entry.id == lastChatID {
-			asterisk = "*"
-		}
-		age := time.Since(entry.chat.CreatedAt).Round(time.Second)
-		chatId := entry.id
-		created := entry.chat.CreatedAt.Format(time.DateTime)
-		fmt.Printf(tableFmt, asterisk, chatId, age, created, lastUserMessage)
-	}
+    // Print each chat entry
+    for _, entry := range chats {
+        var lastUserMessage string
+        for i := len(entry.chat.Messages) - 1; i >= 0; i-- {
+            if entry.chat.Messages[i].Role == "user" {
+                lastUserMessage = entry.chat.Messages[i].Content
+                break
+            }
+        }
+        
+        asterisk := ""
+        if entry.id == lastChatID {
+            asterisk = "*"
+        }
+        
+        age := time.Since(entry.chat.CreatedAt).Round(time.Second)
+        created := entry.chat.CreatedAt.Format(time.DateTime)
+
+        // Get values for each column
+        for i, col := range columns {
+            values[i] = col.getValue(asterisk, entry.id, age, created, lastUserMessage)
+        }
+        
+        // Print the row
+        fmt.Printf(strings.Repeat("%s ", len(columns)-1)+"%s\n", values...)
+    }
 }
 
 var (
