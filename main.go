@@ -54,7 +54,11 @@ func loadHistory() {
 		fmt.Println("Error parsing history file:", err)
 		return
 	}
-	chatHistory = config.History
+	if config.History != nil {
+		chatHistory = config.History
+	} else {
+		chatHistory = make(map[string][]Message)
+	}
 	lastChatID = config.LastChatID
 }
 
