@@ -49,7 +49,21 @@ func checkServiceStatus() {
 	}
 
 	status := result["status"].(map[string]interface{})
-	fmt.Printf("Service Status: %s - %s\n", status["indicator"], status["description"])
+	indicator := status["indicator"].(string)
+	var emoji string
+	switch indicator {
+	case "none":
+		emoji = "✅"
+	case "minor":
+		emoji = "⚠️"
+	case "major":
+		emoji = "🚨"
+	case "critical":
+		emoji = "🔥"
+	default:
+		emoji = "❓"
+	}
+	fmt.Printf("Service Status: %s %s - %s\n", emoji, indicator, status["description"])
 }
 
 func listChats() {
