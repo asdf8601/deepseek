@@ -323,12 +323,19 @@ func removeChats(criteria string) {
 				return
 			}
 
+			fmt.Printf("Removing chats older than: %s\n", cutoff)
+
 			// Remove chats older than the cutoff
+			removed := false
 			for chatID, chat := range chatHistory {
 				if chat.CreatedAt.Before(cutoff) {
 					delete(chatHistory, chatID)
 					fmt.Printf("Chat ID: %s removed due to age.\n", chatID)
+					removed = true
 				}
+			}
+			if !removed {
+				fmt.Println("No chats were removed. All chats are within the specified duration.")
 			}
 			return
 		}
