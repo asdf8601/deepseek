@@ -241,11 +241,17 @@ func main() {
 	model := flag.String("model", "deepseek-chat", "Model to use (default: deepseek-chat)")
 	chatID := flag.String("chat", "", "Conversation ID (optional, generates one if not provided)")
 	newChat := flag.Bool("new", false, "Create a new conversation")
-	verbose := flag.Bool("v", false, "Verbose output")
 	debug := flag.Bool("debug", false, "Enable debug logging")
 	listChatsFlag := flag.Bool("ls", false, "List all chats and their last message")
 	removeChat := flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
+	checkStatus := flag.Bool("status", false, "Check Deepseek API service status")
+	removeChat := flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
 	flag.Parse()
+	// Check if the -status flag was passed
+	if *checkStatus {
+		checkDeepseekStatus()
+		return
+	}
 
 	// Check if the -rm flag was passed
 	if *removeChat != "" {
@@ -443,6 +449,56 @@ func main() {
 	chatHistory[*chatID] = chat
 	mutex.Unlock()
 	saveHistory()
+}
+func checkDeepseekStatus() {
+	// Read API token from environment variable
+	apiKey := os.Getenv("DEEPSEEK_API_KEY")
+	if apiKey == "" {
+		fmt.Println("Error: DEEPSEEK_API_KEY environment variable is not set.")
+		return
+	}
+
+	// Create a simple request to check models endpoint
+	url := "https://api.deepseek.com/v1/models"
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Printf("❌ Error creating request: %v\n", err)
+		return
+	}
+
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	// Send request
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("❌ Service unavailable: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("❌ Error reading response: %v\n", err)
+		return
+	}
+
+	if resp.StatusCode == http.StatusOK {
+		fmt.Printf("✅ Deepseek API is operational (Status: %d)\n", resp.StatusCode)
+
+		// Pretty print the available models
+		var prettyJSON bytes.Buffer
+		err = json.Indent(&prettyJSON, body, "", "  ")
+		if err != nil {
+			fmt.Printf("Error formatting JSON: %v\n", err)
+			return
+		}
+		fmt.Printf("\nAvailable models:\n%s\n", prettyJSON.String())
+	} else {
+		fmt.Printf("❌ Service is responding but with errors (Status: %d)\n", resp.StatusCode)
+		fmt.Printf("Response: %s\n", string(body))
+	}
 }
 
 func removeChats(criteria string) {
