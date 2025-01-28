@@ -15,6 +15,20 @@ import (
 	"sync"
 )
 
+func listChats() {
+    mutex.Lock()
+    defer mutex.Unlock()
+
+    for chatID, messages := range chatHistory {
+        if len(messages) > 0 {
+            lastMessage := messages[len(messages)-1]
+            fmt.Printf("Chat ID: %s, Last message: %s\n", chatID, lastMessage.Content)
+        } else {
+            fmt.Printf("Chat ID: %s, No messages.\n", chatID)
+        }
+    }
+}
+
 var (
 	chatHistory = make(map[string][]Message)
 	mutex       = &sync.Mutex{}
@@ -126,7 +140,14 @@ func main() {
 	chatID := flag.String("chat", "", "Conversation ID (optional, generates one if not provided)")
 	newChat := flag.Bool("new", false, "Create a new conversation")
 	verbose := flag.Bool("v", false, "Verbose output")
+	listChatsFlag := flag.Bool("ls", false, "List all chats and their last message")
 	flag.Parse()
+
+	// Check if the -ls flag was passed
+	if *listChatsFlag {
+	    listChats()
+	    return
+	}
 
 	// Read API token from environment variable
 	apiKey := os.Getenv("DEEPSEEK_API_KEY")
