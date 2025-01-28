@@ -189,15 +189,19 @@ func main() {
 	}
 	prompt := flag.Args()[0]
 
-	// Get message history for this chat-id
+	// Get chat history for this chat-id
 	mutex.Lock()
-	messages, exists := chatHistory[*chatID]
+	chat, exists := chatHistory[*chatID]
 	if !exists {
-		messages = []Message{
-			{Role: "system", Content: "You are a helpful assistant"},
+		chat = Chat{
+			CreatedAt: time.Now(),
+			Messages: []Message{
+				{Role: "system", Content: "You are a helpful assistant"},
+			},
 		}
 	}
-	messages = append(messages, Message{Role: "user", Content: prompt})
+	chat.Messages = append(chat.Messages, Message{Role: "user", Content: prompt})
+	chatHistory[*chatID] = chat
 	mutex.Unlock()
 
 	// Build request body
