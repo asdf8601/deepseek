@@ -243,13 +243,13 @@ func main() {
 	newChat := flag.Bool("new", false, "Create a new conversation")
 	debug := flag.Bool("debug", false, "Enable debug logging")
 	listChatsFlag := flag.Bool("ls", false, "List all chats and their last message")
-	checkStatus := flag.Bool("status", false, "Check Deepseek API service status")
+	checkModels := flag.Bool("models", false, "List available Deepseek models")
 	removeChat := flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
 	flag.Parse()
 	// Check if the -status flag was passed
-	if *checkStatus {
-		checkDeepseekStatus()
+	if *checkModels {
+		listDeepseekModels()
 		return
 	}
 
@@ -450,7 +450,7 @@ func main() {
 	mutex.Unlock()
 	saveHistory()
 }
-func checkDeepseekStatus() {
+func listDeepseekModels() {
 	// Read API token from environment variable
 	apiKey := os.Getenv("DEEPSEEK_API_KEY")
 	if apiKey == "" {
@@ -494,7 +494,15 @@ func checkDeepseekStatus() {
 			fmt.Printf("Error formatting JSON: %v\n", err)
 			return
 		}
-		fmt.Printf("\nAvailable models:\n%s\n", prettyJSON.String())
+		fmt.Println("\nAvailable model IDs:")
+		var responseData map[string][]map[string]interface{}
+		if err := json.Unmarshal(body, &responseData); err != nil {
+			fmt.Printf("Error parsing JSON: %v\n", err)
+			return
+		}
+		for _, model := range responseData["data"] {
+			fmt.Println(model["id"])
+		}
 	} else {
 		fmt.Printf("❌ Service is responding but with errors (Status: %d)\n", resp.StatusCode)
 		fmt.Printf("Response: %s\n", string(body))
