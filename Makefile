@@ -1,5 +1,5 @@
 run:
-	go run main.go
+	go run main.go help
 
 test:
 	go run main.go -chat hello hello
@@ -9,4 +9,8 @@ test:
 	go run main.go -ls
 
 build:
-	go run -o deepseek main.go
+	@rm deepseek &> /dev/null || true
+	go build -o deepseek main.go
+
+install: build
+	cp -f deepseek ~/.local/bin
