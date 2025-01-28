@@ -19,19 +19,19 @@ import (
 
 // Define una estructura para las columnas con toda la información necesaria
 type column struct {
-	      string
-	e     string
-	mat   string
-	th    int
-	Value func(asterisk string, chatId string, age time.Duration, created string, lastMsg string) string
+	id       string
+	name     string
+	format   string
+	width    int
+	getValue func(asterisk string, chatId string, age string, created string, lastMsg string) string
 }
 
 func listChats() {
-	ex.Lock()
-	er mutex.Unlock()
+	mutex.Lock()
+	defer mutex.Unlock()
 
-	Define las columnas y su orden
-	umns := []column{
+	// Define columns and their order
+	columns := []column{
 		{
 			id:     "asterisk",
 			name:   "",
@@ -119,12 +119,12 @@ func listChats() {
 		created := entry.chat.CreatedAt.Format(time.DateTime)
 
 		// Get values for each column
-		 col := range columns {
-			 = col.getValue(asterisk, entry.id, age, created, lastUserMessage)
+		for i, col := range columns {
+			values[i] = col.getValue(asterisk, entry.id, fmt.Sprint(age), created, lastUserMessage)
+		}
 
-
-		nt the row
-		intf(strings.Repeat("%s ", len(columns)-1)+"%s\n", values...)
+		// Print the row
+		fmt.Printf(strings.Repeat("%s ", len(columns)-1)+"%s\n", values...)
 
 }
 
