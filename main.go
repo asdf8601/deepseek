@@ -10,13 +10,59 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sync"
 )
 
 var (
 	chatHistory = make(map[string][]Message)
 	mutex       = &sync.Mutex{}
+	historyFile string
 )
+
+func init() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("Error getting home directory:", err)
+		return
+	}
+	historyFile = filepath.Join(homeDir, ".deepseek_history.json")
+	loadHistory()
+}
+
+func loadHistory() {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	data, err := os.ReadFile(historyFile)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			fmt.Println("Error reading history file:", err)
+		}
+		return
+	}
+
+	err = json.Unmarshal(data, &chatHistory)
+	if err != nil {
+		fmt.Println("Error parsing history file:", err)
+	}
+}
+
+func saveHistory() {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	data, err := json.MarshalIndent(chatHistory, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshaling history:", err)
+		return
+	}
+
+	err = os.WriteFile(historyFile, data, 0600)
+	if err != nil {
+		fmt.Println("Error writing history file:", err)
+	}
+}
 
 type Message struct {
 	Role    string `json:"role"`
@@ -143,6 +189,7 @@ func main() {
 		mutex.Lock()
 		chatHistory[*chatID] = append(messages, Message{Role: "assistant", Content: assistantMessage})
 		mutex.Unlock()
+		saveHistory()
 	} else {
 		fmt.Println("No se recibió ninguna respuesta del modelo.")
 	}
