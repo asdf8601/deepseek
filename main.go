@@ -304,41 +304,24 @@ func removeChats(criteria string) {
 	defer mutex.Unlock()
 
 	// Try to parse as duration
-	if len(criteria) > 1 {
-		unit := criteria[len(criteria)-1]
-		value, err := strconv.Atoi(criteria[:len(criteria)-1])
-		if err == nil {
-			var cutoff time.Time
-			switch unit {
-			case 'h':
-				cutoff = time.Now().Add(-time.Duration(value) * time.Hour)
-			case 'd':
-				cutoff = time.Now().AddDate(0, 0, -value)
-			case 'w':
-				cutoff = time.Now().AddDate(0, 0, -value*7)
-			case 'y':
-				cutoff = time.Now().AddDate(-value, 0, 0)
-			default:
-				fmt.Println("Invalid duration format. Use 'h' for hours, 'd' for days, 'w' for weeks, or 'y' for years.")
-				return
-			}
+	duration, err := time.ParseDuration(criteria)
+	if err == nil {
+		cutoff := time.Now().Add(-duration)
+		fmt.Printf("Removing chats older than: %s\n", cutoff)
 
-			fmt.Printf("Removing chats older than: %s\n", cutoff)
-
-			// Remove chats older than the cutoff
-			removed := false
-			for chatID, chat := range chatHistory {
-				if chat.CreatedAt.Before(cutoff) {
-					delete(chatHistory, chatID)
-					fmt.Printf("Chat ID: %s removed due to age.\n", chatID)
-					removed = true
-				}
+		// Remove chats older than the cutoff
+		removed := false
+		for chatID, chat := range chatHistory {
+			if chat.CreatedAt.Before(cutoff) {
+				delete(chatHistory, chatID)
+				fmt.Printf("Chat ID: %s removed due to age.\n", chatID)
+				removed = true
 			}
-			if !removed {
-				fmt.Println("No chats were removed. All chats are within the specified duration.")
-			}
-			return
 		}
+		if !removed {
+			fmt.Println("No chats were removed. All chats are within the specified duration.")
+		}
+		return
 	}
 
 	// Try to remove by ID
