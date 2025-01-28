@@ -46,9 +46,9 @@ var (
 type Chat struct {
 	CreatedAt time.Time `json:"created_at"`
 	Messages  []Message `json:"messages"`
-}
-	LastChatID string            `json:"last_chat_id"`
-	History    map[string]Chat   `json:"history"`
+type Config struct {
+	LastChatID string          `json:"last_chat_id"`
+	History    map[string]Chat `json:"history"`
 }
 
 func init() {
