@@ -115,6 +115,7 @@ func main() {
 	// Definir flags
 	model := flag.String("model", "deepseek-chat", "Modelo a utilizar (por defecto: deepseek-chat)")
 	chatID := flag.String("chat", "", "ID de la conversación (opcional, se genera uno si no se proporciona)")
+	newChat := flag.Bool("new", false, "Crear una nueva conversación")
 	flag.Parse()
 
 	// Leer el token de la API de la variable de entorno
@@ -124,15 +125,13 @@ func main() {
 		return
 	}
 
-	// Usar el último chat-id o generar uno nuevo
-	if *chatID == "" {
-		if lastChatID != "" {
-			*chatID = lastChatID
-			fmt.Println("Usando el último chat-id:", *chatID)
-		} else {
-			*chatID = generateChatID()
-			fmt.Println("Nuevo chat-id generado:", *chatID)
-		}
+	// Manejar la selección del chat ID
+	if *newChat || (*chatID == "" && lastChatID == "") {
+		*chatID = generateChatID()
+		fmt.Println("Nuevo chat-id generado:", *chatID)
+	} else if *chatID == "" {
+		*chatID = lastChatID
+		fmt.Println("Usando el último chat-id:", *chatID)
 	}
 	lastChatID = *chatID
 
