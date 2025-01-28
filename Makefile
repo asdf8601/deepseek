@@ -14,3 +14,7 @@ build:
 
 install: build
 	cp -f deepseek ~/.local/bin
+
+
+fmt:
+	go fmt ./...
