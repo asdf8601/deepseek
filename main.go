@@ -495,13 +495,17 @@ func listDeepseekModels() {
 			return
 		}
 		fmt.Println("\nAvailable model IDs:")
-		var responseData map[string][]map[string]interface{}
+		var responseData map[string]interface{}
 		if err := json.Unmarshal(body, &responseData); err != nil {
 			fmt.Printf("Error parsing JSON: %v\n", err)
 			return
 		}
-		for _, model := range responseData["data"] {
-			fmt.Println(model["id"])
+		if data, ok := responseData["data"].([]interface{}); ok {
+			for _, item := range data {
+				if model, ok := item.(map[string]interface{}); ok {
+					fmt.Println(model["id"])
+				}
+			}
 		}
 	} else {
 		fmt.Printf("❌ Service is responding but with errors (Status: %d)\n", resp.StatusCode)
