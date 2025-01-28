@@ -21,8 +21,27 @@ func listChats() {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	fmt.Printf("%-2s %-20s %-15s %-30s %-30s\n", "", "CHAT ID", "AGE", "CREATED AT", "LAST USER MESSAGE")
-	fmt.Println(strings.Repeat("-", 97))
+	type column struct {
+		name   string
+		format string
+	}
+	columns := []column{
+		{"", "%-2s"},
+		{"CHAT ID", "%-18s"},
+		{"AGE", "%-10s"},
+		{"CREATED AT", "%-20s"},
+		{"LAST USER MESSAGE", "%-30s"},
+	}
+
+	// Build format string
+	headers := make([]string, len(columns))
+	tableFmt := ""
+	for i, col := range columns {
+		headers[i] += fmt.Sprintf(col.format, col.name)
+		tableFmt += col.format + " "
+	}
+	tableFmt += "\n"
+	fmt.Println(strings.Join(headers, " "))
 
 	// Convert map to slice for sorting
 	type chatEntry struct {
@@ -52,11 +71,9 @@ func listChats() {
 			asterisk = "*"
 		}
 		age := time.Since(entry.chat.CreatedAt).Round(time.Second)
-		if lastUserMessage != "" {
-			fmt.Printf("%-2s %-20s %-15s %-30s %-30.30s\n", asterisk, entry.id, age, entry.chat.CreatedAt.Format(time.RFC3339), lastUserMessage)
-		} else {
-			fmt.Printf("%-2s %-20s %-15s %-30s %-30s\n", asterisk, entry.id, age, entry.chat.CreatedAt.Format(time.RFC3339), "No user messages")
-		}
+		chatId := entry.id
+		created := entry.chat.CreatedAt.Format(time.DateTime)
+		fmt.Printf(tableFmt, asterisk, chatId, age, created, lastUserMessage)
 	}
 }
 
