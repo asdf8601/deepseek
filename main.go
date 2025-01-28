@@ -18,7 +18,13 @@ var (
 	chatHistory = make(map[string][]Message)
 	mutex       = &sync.Mutex{}
 	historyFile string
+	lastChatID  string
 )
+
+type Config struct {
+	LastChatID string            `json:"last_chat_id"`
+	History    map[string][]Message `json:"history"`
+}
 
 func init() {
 	homeDir, err := os.UserHomeDir()
@@ -42,17 +48,25 @@ func loadHistory() {
 		return
 	}
 
-	err = json.Unmarshal(data, &chatHistory)
+	var config Config
+	err = json.Unmarshal(data, &config)
 	if err != nil {
 		fmt.Println("Error parsing history file:", err)
+		return
 	}
+	chatHistory = config.History
+	lastChatID = config.LastChatID
 }
 
 func saveHistory() {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	data, err := json.MarshalIndent(chatHistory, "", "  ")
+	config := Config{
+		LastChatID: lastChatID,
+		History:    chatHistory,
+	}
+	data, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		fmt.Println("Error marshaling history:", err)
 		return
@@ -106,11 +120,17 @@ func main() {
 		return
 	}
 
-	// Generar un chat-id si no se proporciona
+	// Usar el último chat-id o generar uno nuevo
 	if *chatID == "" {
-		*chatID = generateChatID()
-		fmt.Println("Nuevo chat-id generado:", *chatID)
+		if lastChatID != "" {
+			*chatID = lastChatID
+			fmt.Println("Usando el último chat-id:", *chatID)
+		} else {
+			*chatID = generateChatID()
+			fmt.Println("Nuevo chat-id generado:", *chatID)
+		}
 	}
+	lastChatID = *chatID
 
 	// Obtener el prompt del usuario
 	if len(flag.Args()) == 0 {
