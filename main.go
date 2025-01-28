@@ -243,9 +243,10 @@ func main() {
 	newChat := flag.Bool("new", false, "Create a new conversation")
 	debug := flag.Bool("debug", false, "Enable debug logging")
 	listChatsFlag := flag.Bool("ls", false, "List all chats and their last message")
-	removeChat := flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
+	removeChat = flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
 	checkStatus := flag.Bool("status", false, "Check Deepseek API service status")
 	removeChat := flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
+	verbose := flag.Bool("verbose", false, "Enable verbose logging")
 	flag.Parse()
 	// Check if the -status flag was passed
 	if *checkStatus {
