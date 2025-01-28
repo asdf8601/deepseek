@@ -23,7 +23,7 @@ var (
 )
 
 type Config struct {
-	LastChatID string            `json:"last_chat_id"`
+	LastChatID string               `json:"last_chat_id"`
 	History    map[string][]Message `json:"history"`
 }
 
@@ -125,6 +125,7 @@ func main() {
 	model := flag.String("model", "deepseek-chat", "Model to use (default: deepseek-chat)")
 	chatID := flag.String("chat", "", "Conversation ID (optional, generates one if not provided)")
 	newChat := flag.Bool("new", false, "Create a new conversation")
+	verbose := flag.Bool("v", false, "Verbose output")
 	flag.Parse()
 
 	// Read API token from environment variable
@@ -137,10 +138,14 @@ func main() {
 	// Handle chat ID selection
 	if *newChat || (*chatID == "" && lastChatID == "") {
 		*chatID = generateChatID()
-		fmt.Println("Nuevo chat-id generado:", *chatID)
+		if *verbose {
+			fmt.Println("Nuevo chat-id generado:", *chatID)
+		}
 	} else if *chatID == "" {
 		*chatID = lastChatID
-		fmt.Println("Usando el último chat-id:", *chatID)
+		if *verbose {
+			fmt.Println("Usando el último chat-id:", *chatID)
+		}
 	}
 	lastChatID = *chatID
 
@@ -198,7 +203,7 @@ func main() {
 	defer resp.Body.Close()
 
 	// Process streaming response
-	fmt.Print("Response: ")
+	// fmt.Print("Response: ")
 	scanner := bufio.NewScanner(resp.Body)
 	var fullResponse strings.Builder
 
@@ -210,7 +215,7 @@ func main() {
 		if !strings.HasPrefix(line, "data: ") {
 			continue
 		}
-		
+
 		line = strings.TrimPrefix(line, "data: ")
 		if line == "[DONE]" {
 			break
@@ -227,7 +232,7 @@ func main() {
 			fullResponse.WriteString(content)
 		}
 	}
-	
+
 	if err := scanner.Err(); err != nil {
 		fmt.Println("\nError reading stream:", err)
 		return
