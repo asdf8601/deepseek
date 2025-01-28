@@ -274,7 +274,6 @@ func main() {
 	checkModels := flag.Bool("models", false, "List available Deepseek models")
 	removeChat := flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
-	checkStatus := flag.Bool("status", false, "Check DeepSeek service status")
 	flag.Parse()
 	// Check if the -status flag was passed
 	if *checkModels {
