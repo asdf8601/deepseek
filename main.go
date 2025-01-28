@@ -289,10 +289,15 @@ func main() {
 	mutex.Lock()
 	chat, exists := chatHistory[*chatID]
 	if !exists {
+		sys_content := os.Getenv("DEEPSEEK_ROLE")
+		if sys_content == "" {
+			sys_content = "You are a helpful assistant. Be concise."
+		}
+
 		chat = Chat{
 			CreatedAt: time.Now(),
 			Messages: []Message{
-				{Role: "system", Content: "You are a helpful assistant"},
+				{Role: "system", Content: sys_content},
 			},
 		}
 	}
