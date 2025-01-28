@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -240,6 +242,7 @@ func main() {
 	chatID := flag.String("chat", "", "Conversation ID (optional, generates one if not provided)")
 	newChat := flag.Bool("new", false, "Create a new conversation")
 	verbose := flag.Bool("v", false, "Verbose output")
+	debug := flag.Bool("debug", false, "Enable debug logging")
 	listChatsFlag := flag.Bool("ls", false, "List all chats and their last message")
 	removeChat := flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
 	flag.Parse()
@@ -319,6 +322,10 @@ func main() {
 		return
 	}
 
+	if *debug {
+		log.Printf("Request body: %s\n", string(jsonData))
+	}
+
 	// Create HTTP request
 	url := "https://api.deepseek.com/v1/chat/completions"
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
@@ -331,6 +338,13 @@ func main() {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
+	if *debug {
+		log.Println("=== Request headers:")
+		for key, values := range req.Header {
+			log.Printf("  %s: %v\n", key, values)
+		}
+	}
+
 	// Send request
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -340,34 +354,79 @@ func main() {
 	}
 	defer resp.Body.Close()
 
+	if *debug {
+		log.Printf("=== Response status: %s\n", resp.Status)
+		log.Println("=== Response headers:")
+		for key, values := range resp.Header {
+			log.Printf("  %s: %v\n", key, values)
+		}
+	}
+
+	// Check if the response status is not 200
+	if resp.StatusCode != http.StatusOK {
+		// Read and log the error response
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("Error reading error response: %v\n", err)
+			return
+		}
+		log.Printf("API Error Response: %s\n", string(body))
+		return
+	}
+
 	// Process streaming response
-	// fmt.Print("Response: ")
 	scanner := bufio.NewScanner(resp.Body)
 	var fullResponse strings.Builder
 
+	if *debug {
+		log.Println("=== Starting to process stream response...")
+	}
+
 	for scanner.Scan() {
 		line := scanner.Text()
+		if *debug {
+			log.Printf("== Raw line received: %s\n", line)
+		}
+
 		if line == "" {
+			if *debug {
+				log.Println("Empty line, skipping")
+			}
 			continue
 		}
+
 		if !strings.HasPrefix(line, "data: ") {
+			if *debug {
+				log.Printf("Line doesn't start with 'data: ', skipping: %s\n", line)
+			}
 			continue
 		}
 
 		line = strings.TrimPrefix(line, "data: ")
 		if line == "[DONE]" {
+			if *debug {
+				log.Println("Received [DONE] message, ending stream")
+			}
 			break
 		}
 
 		var streamResp StreamResponse
 		if err := json.Unmarshal([]byte(line), &streamResp); err != nil {
+			if *debug {
+				log.Printf("Error unmarshaling JSON: %v\nProblematic line: %s\n", err, line)
+			}
 			continue
 		}
 
 		if len(streamResp.Choices) > 0 {
 			content := streamResp.Choices[0].Delta.Content
+			if *debug {
+				log.Printf("Received content chunk: %s\n", content)
+			}
 			fmt.Print(content)
 			fullResponse.WriteString(content)
+		} else if *debug {
+			log.Println("No choices in response")
 		}
 	}
 
@@ -385,6 +444,7 @@ func main() {
 	mutex.Unlock()
 	saveHistory()
 }
+
 func removeChats(criteria string) {
 	mutex.Lock()
 	defer mutex.Unlock()
