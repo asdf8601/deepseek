@@ -58,6 +58,7 @@ func init() {
 }
 
 func loadHistory() {
+	fmt.Printf("Reading history from file: %s\n", historyFile) // Nueva línea añadida
 	mutex.Lock()
 	defer mutex.Unlock()
 
