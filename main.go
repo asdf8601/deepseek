@@ -33,55 +33,49 @@ func listChats() {
 	// Define columns and their order
 	columns := []column{
 		{
-			id:     "asterisk",
-			name:   "",
-			format: "%-2s",
-			width:  2,
+			id:       "asterisk",
+			name:     "",
+			format:   "%-2s",
+			width:    2,
 			getValue: func(asterisk, _, _, _, _ string) string { return asterisk },
 		},
 		{
-			id:     "chat_id",
-			name:   "CHAT ID",
-			format: "%-18s",
-			width:  18,
-			getValue: func(_, chatId, _, _, _ string) string {
-				return chatId
-			},
+			id:       "chat_id",
+			name:     "CHAT ID",
+			format:   "%-18s",
+			width:    18,
+			getValue: func(_, chatId, _, _, _ string) string { return chatId },
 		},
 		{
-			id:     "age",
-			name:   "AGE",
-			format: "%-10s",
-			width:  10,
-			getValue: func(_, _, age, _, _ string) string {
-				return age
-			},
+			id:       "age",
+			name:     "AGE",
+			format:   "%-10s",
+			width:    10,
+			getValue: func(_, _, age, _, _ string) string { return age },
 		},
 		{
-			id:     "created_at",
-			name:   "CREATED AT",
-			format: "%-20s",
-			width:  20,
-			getValue: func(_, _, _, created, _ string) string {
-				return created
-			},
+			id:       "created_at",
+			name:     "CREATED AT",
+			format:   "%-20s",
+			width:    20,
+			getValue: func(_, _, _, created, _ string) string { return created },
 		},
 		{
-			id:     "last_message",
-			name:   "LAST USER MESSAGE",
-			format: "%-30s",
-			width:  30,
-			getValue: func(_, _, _, _, lastMsg string) string {
-				return lastMsg
-			},
+			id:       "last_message",
+			name:     "LAST USER MESSAGE",
+			format:   "%-30s",
+			width:    30,
+			getValue: func(_, _, _, _, lastMsg string) string { return lastMsg },
 		},
 	}
 
 	// Build format string and print headers
 	headers := make([]string, len(columns))
 	values := make([]interface{}, len(columns))
+	valuesFmt := make([]string, len(columns))
 	for i, col := range columns {
 		headers[i] = fmt.Sprintf(col.format, col.name)
+		valuesFmt[i] += col.format
 	}
 	fmt.Println(strings.Join(headers, " "))
 
@@ -124,7 +118,7 @@ func listChats() {
 		}
 
 		// Print the row
-		fmt.Printf(strings.Repeat("%s ", len(columns)-1)+"%s\n", values...)
+		fmt.Printf(strings.Join(valuesFmt, " ")+"\n", values...)
 	}
 
 }
