@@ -288,7 +288,7 @@ func main() {
 	checkModels := flag.Bool("models", false, "List available Deepseek models")
 	removeChat := flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
-	contextLimit := flag.Int("context", 10, "Number of messages to include in the context (default: 10)")
+	memoryLimit := flag.Int("memory", 10, "Number of messages to include in the memory (default: 10)")
 	flag.Parse()
 	// Check if the -status flag was passed
 	if *checkStatus {
@@ -366,11 +366,12 @@ func main() {
 		}
 	}
 
-	// Limit the context to the last N messages plus the system message
-	if len(chat.Messages) > *contextLimit+1 {
-		chat.Messages = chat.Messages[len(chat.Messages)-*contextLimit:]
+	// Limit the memory to the last N messages plus the system message
+	if len(chat.Messages) > *memoryLimit+1 {
+		chat.Messages = chat.Messages[len(chat.Messages)-*memoryLimit:]
 		chat.Messages = append([]Message{systemMessage}, chat.Messages...)
 	}
+	// add the current user message which means memory + 2
 	chat.Messages = append(chat.Messages, Message{Role: "user", Content: prompt})
 	chatHistory[*chatID] = chat
 	mutex.Unlock()
@@ -404,13 +405,6 @@ func main() {
 	// Set headers
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
-
-	if *debug {
-		log.Println("=== Request headers:")
-		for key, values := range req.Header {
-			log.Printf("  %s: %v\n", key, values)
-		}
-	}
 
 	// Send request
 	client := &http.Client{}
