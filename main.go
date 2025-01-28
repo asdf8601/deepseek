@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 	"sync"
 )
 
@@ -19,7 +20,7 @@ func listChats() {
     mutex.Lock()
     defer mutex.Unlock()
 
-    for chatID, messages := range chatHistory {
+    for chatID, chat := range chatHistory {
         var lastUserMessage string
         for i := len(messages) - 1; i >= 0; i-- {
             if messages[i].Role == "user" {
@@ -36,15 +37,18 @@ func listChats() {
 }
 
 var (
-	chatHistory = make(map[string][]Message)
+	chatHistory = make(map[string]Chat)
 	mutex       = &sync.Mutex{}
 	historyFile string
 	lastChatID  string
 )
 
-type Config struct {
-	LastChatID string               `json:"last_chat_id"`
-	History    map[string][]Message `json:"history"`
+type Chat struct {
+	CreatedAt time.Time `json:"created_at"`
+	Messages  []Message `json:"messages"`
+}
+	LastChatID string            `json:"last_chat_id"`
+	History    map[string]Chat   `json:"history"`
 }
 
 func init() {
@@ -76,10 +80,11 @@ func loadHistory() {
 		fmt.Println("Error parsing history file:", err)
 		return
 	}
-	if config.History != nil {
+chatHistory = make(map[string]Chat)
+if config.History != nil {
 		chatHistory = config.History
 	} else {
-		chatHistory = make(map[string][]Message)
+		chatHistory = make(map[string]Chat)
 	}
 	lastChatID = config.LastChatID
 }
@@ -270,7 +275,36 @@ func main() {
 	// Update message history
 	assistantMessage := fullResponse.String()
 	mutex.Lock()
-	chatHistory[*chatID] = append(messages, Message{Role: "assistant", Content: assistantMessage})
+	chat.Messages = append(chat.Messages, Message{Role: "assistant", Content: assistantMessage})
+	chatHistory[*chatID] = chat
 	mutex.Unlock()
 	saveHistory()
+}
+func removeChats(criteria string) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	if strings.HasSuffix(criteria, "d") {
+		// Remove by duration
+		days, err := strconv.Atoi(strings.TrimSuffix(criteria, "d"))
+		if err != nil {
+			fmt.Println("Invalid duration format. Use something like '10d'.")
+			return
+		}
+		cutoff := time.Now().AddDate(0, 0, -days)
+		for chatID, chat := range chatHistory {
+			if chat.CreatedAt.Before(cutoff) {
+				delete(chatHistory, chatID)
+				fmt.Printf("Chat ID: %s removed due to age.\n", chatID)
+			}
+		}
+	} else {
+		// Remove by ID
+		if _, exists := chatHistory[criteria]; exists {
+			delete(chatHistory, criteria)
+			fmt.Printf("Chat ID: %s removed.\n", criteria)
+		} else {
+			fmt.Println("Chat ID not found.")
+		}
+	}
 }
