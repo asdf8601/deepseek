@@ -20,11 +20,17 @@ func listChats() {
     defer mutex.Unlock()
 
     for chatID, messages := range chatHistory {
-        if len(messages) > 0 {
-            lastMessage := messages[len(messages)-1]
-            fmt.Printf("Chat ID: %s, Last message: %s\n", chatID, lastMessage.Content)
+        var lastUserMessage string
+        for i := len(messages) - 1; i >= 0; i-- {
+            if messages[i].Role == "user" {
+                lastUserMessage = messages[i].Content
+                break
+            }
+        }
+        if lastUserMessage != "" {
+            fmt.Printf("Chat ID: %s, Last user message: %s\n", chatID, lastUserMessage)
         } else {
-            fmt.Printf("Chat ID: %s, No messages.\n", chatID)
+            fmt.Printf("Chat ID: %s, No user messages.\n", chatID)
         }
     }
 }
