@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"strings"
 )
 
 func listChats() {
