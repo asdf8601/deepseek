@@ -26,11 +26,11 @@ func listChats() {
 		format string
 	}
 	columns := []column{
-		{"", "%-2s"},
-		{"CHAT ID", "%-18s"},
-		{"AGE", "%-10s"},
-		{"CREATED AT", "%-20s"},
-		{"LAST USER MESSAGE", "%-30s"},
+		{"", "%-2s"},                   // Asterisk
+		{"CHAT ID", "%-18s"},           // Chat ID
+		{"AGE", "%-10s"},               // Age
+		{"CREATED AT", "%-20s"},        // Created At
+		{"LAST USER MESSAGE", "%-30s"}, // Last User Message
 	}
 
 	// Build format string
