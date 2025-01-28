@@ -166,6 +166,8 @@ type Config struct {
 	History    map[string]Chat `json:"history"`
 }
 
+var checkStatus *bool
+
 func init() {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -173,9 +175,7 @@ func init() {
 		return
 	}
 
-	if *checkStatus {
-		checkServiceStatus()
-	}
+	checkStatus = flag.Bool("status", false, "Check DeepSeek service status")
 	historyFile = filepath.Join(homeDir, ".deepseek_history.json")
 	loadHistory(historyFile)
 }
