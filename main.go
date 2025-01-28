@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -101,6 +102,14 @@ type ResponseBody struct {
 	} `json:"choices"`
 }
 
+type StreamResponse struct {
+	Choices []struct {
+		Delta struct {
+			Content string `json:"content"`
+		} `json:"delta"`
+	} `json:"choices"`
+}
+
 // Generate a unique chat-id
 func generateChatID() string {
 	b := make([]byte, 8)
@@ -157,7 +166,7 @@ func main() {
 	requestBody := RequestBody{
 		Model:    *model,
 		Messages: messages,
-		Stream:   false,
+		Stream:   true,
 	}
 
 	// Convert body to JSON
@@ -188,32 +197,33 @@ func main() {
 	}
 	defer resp.Body.Close()
 
-	// Read response
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		return
-	}
+	// Process streaming response
+	fmt.Print("Response: ")
+	decoder := json.NewDecoder(resp.Body)
+	var fullResponse strings.Builder
 
-	// Decode response
-	var response ResponseBody
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		fmt.Println("Error unmarshaling response body:", err)
-		return
-	}
+	for {
+		var streamResp StreamResponse
+		if err := decoder.Decode(&streamResp); err != nil {
+			if err == io.EOF {
+				break
+			}
+			fmt.Println("\nError decoding stream:", err)
+			return
+		}
 
-	// Show response
-	if len(response.Choices) > 0 {
-		assistantMessage := response.Choices[0].Message.Content
-		fmt.Println("Respuesta:", assistantMessage)
-
-		// Update message history
-		mutex.Lock()
-		chatHistory[*chatID] = append(messages, Message{Role: "assistant", Content: assistantMessage})
-		mutex.Unlock()
-		saveHistory()
-	} else {
-		fmt.Println("No response received from the model.")
+		if len(streamResp.Choices) > 0 {
+			content := streamResp.Choices[0].Delta.Content
+			fmt.Print(content)
+			fullResponse.WriteString(content)
+		}
 	}
+	fmt.Println()
+
+	// Update message history
+	assistantMessage := fullResponse.String()
+	mutex.Lock()
+	chatHistory[*chatID] = append(messages, Message{Role: "assistant", Content: assistantMessage})
+	mutex.Unlock()
+	saveHistory()
 }
