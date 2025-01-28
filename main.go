@@ -28,6 +28,30 @@ type column struct {
 	getValue func(asterisk string, chatId string, age string, created string, lastMsg string) string
 }
 
+func checkServiceStatus() {
+	url := "https://status.deepseek.com/api/v2/status.json"
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println("Error fetching service status:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("Failed to get service status: %s\n", resp.Status)
+		return
+	}
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		fmt.Println("Error parsing JSON response:", err)
+		return
+	}
+
+	status := result["status"].(map[string]interface{})
+	fmt.Printf("Service Status: %s - %s\n", status["indicator"], status["description"])
+}
+
 func listChats() {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -148,6 +172,10 @@ func init() {
 		fmt.Println("Error getting home directory:", err)
 		return
 	}
+
+	if *checkStatus {
+		checkServiceStatus()
+	}
 	historyFile = filepath.Join(homeDir, ".deepseek_history.json")
 	loadHistory(historyFile)
 }
@@ -246,6 +274,7 @@ func main() {
 	checkModels := flag.Bool("models", false, "List available Deepseek models")
 	removeChat := flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
+	checkStatus := flag.Bool("status", false, "Check DeepSeek service status")
 	flag.Parse()
 	// Check if the -status flag was passed
 	if *checkModels {
