@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
@@ -199,17 +200,26 @@ func main() {
 
 	// Process streaming response
 	fmt.Print("Response: ")
-	decoder := json.NewDecoder(resp.Body)
+	scanner := bufio.NewScanner(resp.Body)
 	var fullResponse strings.Builder
 
-	for {
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			continue
+		}
+		if !strings.HasPrefix(line, "data: ") {
+			continue
+		}
+		
+		line = strings.TrimPrefix(line, "data: ")
+		if line == "[DONE]" {
+			break
+		}
+
 		var streamResp StreamResponse
-		if err := decoder.Decode(&streamResp); err != nil {
-			if err == io.EOF {
-				break
-			}
-			fmt.Println("\nError decoding stream:", err)
-			return
+		if err := json.Unmarshal([]byte(line), &streamResp); err != nil {
+			continue
 		}
 
 		if len(streamResp.Choices) > 0 {
@@ -217,6 +227,11 @@ func main() {
 			fmt.Print(content)
 			fullResponse.WriteString(content)
 		}
+	}
+	
+	if err := scanner.Err(); err != nil {
+		fmt.Println("\nError reading stream:", err)
+		return
 	}
 	fmt.Println()
 
