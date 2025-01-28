@@ -288,6 +288,7 @@ func main() {
 	checkModels := flag.Bool("models", false, "List available Deepseek models")
 	removeChat := flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
+	contextLimit := flag.Int("context", 10, "Number of messages to include in the context (default: 10)")
 	flag.Parse()
 	// Check if the -status flag was passed
 	if *checkStatus {
@@ -355,6 +356,10 @@ func main() {
 				{Role: "system", Content: sys_content},
 			},
 		}
+	}
+	// Limit the context to the last N messages
+	if len(chat.Messages) > *contextLimit {
+		chat.Messages = chat.Messages[len(chat.Messages)-*contextLimit:]
 	}
 	chat.Messages = append(chat.Messages, Message{Role: "user", Content: prompt})
 	chatHistory[*chatID] = chat
