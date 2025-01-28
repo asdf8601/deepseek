@@ -11,31 +11,51 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 )
 
 func listChats() {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	for chatID, chat := range chatHistory {
+	fmt.Printf("%-2s %-20s %-15s %-30s %-30s\n", "", "CHAT ID", "AGE", "CREATED AT", "LAST USER MESSAGE")
+	fmt.Println(strings.Repeat("-", 97))
+
+	// Convert map to slice for sorting
+	type chatEntry struct {
+		id   string
+		chat Chat
+	}
+	var chats []chatEntry
+	for id, chat := range chatHistory {
+		chats = append(chats, chatEntry{id, chat})
+	}
+
+	// Sort by creation time, newest first
+	sort.Slice(chats, func(i, j int) bool {
+		return chats[i].chat.CreatedAt.After(chats[j].chat.CreatedAt)
+	})
+
+	for _, entry := range chats {
 		var lastUserMessage string
-		for i := len(chat.Messages) - 1; i >= 0; i-- {
-			if chat.Messages[i].Role == "user" {
-				lastUserMessage = chat.Messages[i].Content
+		for i := len(entry.chat.Messages) - 1; i >= 0; i-- {
+			if entry.chat.Messages[i].Role == "user" {
+				lastUserMessage = entry.chat.Messages[i].Content
 				break
 			}
 		}
 		asterisk := ""
-		if chatID == lastChatID {
+		if entry.id == lastChatID {
 			asterisk = "*"
 		}
+		age := time.Since(entry.chat.CreatedAt).Round(time.Second)
 		if lastUserMessage != "" {
-			fmt.Printf("Chat ID: %s%s, Created At: %s, Last user message: %s\n", chatID, asterisk, chat.CreatedAt.Format(time.RFC3339), lastUserMessage)
+			fmt.Printf("%-2s %-20s %-15s %-30s %-30.30s\n", asterisk, entry.id, age, entry.chat.CreatedAt.Format(time.RFC3339), lastUserMessage)
 		} else {
-			fmt.Printf("Chat ID: %s%s, Created At: %s, No user messages.\n", chatID, asterisk, chat.CreatedAt.Format(time.RFC3339))
+			fmt.Printf("%-2s %-20s %-15s %-30s %-30s\n", asterisk, entry.id, age, entry.chat.CreatedAt.Format(time.RFC3339), "No user messages")
 		}
 	}
 }
@@ -64,11 +84,10 @@ func init() {
 		return
 	}
 	historyFile = filepath.Join(homeDir, ".deepseek_history.json")
-	loadHistory()
+	loadHistory(historyFile)
 }
 
-func loadHistory() {
-	fmt.Printf("Reading history from file: %s\n", historyFile) // Nueva línea añadida
+func loadHistory(historyFile string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -186,12 +205,12 @@ func main() {
 	if *newChat || (*chatID == "" && lastChatID == "") {
 		*chatID = generateChatID()
 		if *verbose {
-			fmt.Println("Nuevo chat-id generado:", *chatID)
+			fmt.Println("New chat-id generated:", *chatID)
 		}
 	} else if *chatID == "" {
 		*chatID = lastChatID
 		if *verbose {
-			fmt.Println("Usando el último chat-id:", *chatID)
+			fmt.Println("Using last chat-id:", *chatID)
 		}
 	}
 	lastChatID = *chatID
