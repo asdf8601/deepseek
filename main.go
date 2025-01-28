@@ -450,6 +450,7 @@ func main() {
 	mutex.Unlock()
 	saveHistory()
 }
+
 func listDeepseekModels() {
 	// Read API token from environment variable
 	apiKey := os.Getenv("DEEPSEEK_API_KEY")
@@ -462,7 +463,6 @@ func listDeepseekModels() {
 	url := "https://api.deepseek.com/v1/models"
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Printf("❌ Error creating request: %v\n", err)
 		return
 	}
 
@@ -472,7 +472,6 @@ func listDeepseekModels() {
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("❌ Service unavailable: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -480,13 +479,10 @@ func listDeepseekModels() {
 	// Read response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("❌ Error reading response: %v\n", err)
 		return
 	}
 
 	if resp.StatusCode == http.StatusOK {
-		fmt.Printf("✅ Deepseek API is operational (Status: %d)\n", resp.StatusCode)
-
 		// Pretty print the available models
 		var prettyJSON bytes.Buffer
 		err = json.Indent(&prettyJSON, body, "", "  ")
@@ -494,7 +490,7 @@ func listDeepseekModels() {
 			fmt.Printf("Error formatting JSON: %v\n", err)
 			return
 		}
-		fmt.Println("\nAvailable model IDs:")
+		fmt.Println("Available model IDs:")
 		var responseData map[string]interface{}
 		if err := json.Unmarshal(body, &responseData); err != nil {
 			fmt.Printf("Error parsing JSON: %v\n", err)
@@ -508,7 +504,6 @@ func listDeepseekModels() {
 			}
 		}
 	} else {
-		fmt.Printf("❌ Service is responding but with errors (Status: %d)\n", resp.StatusCode)
 		fmt.Printf("Response: %s\n", string(body))
 	}
 }
