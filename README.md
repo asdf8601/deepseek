@@ -12,19 +12,20 @@ export DEEPSEEK_API_KEY="your-api-key"
 
 ## Usage
 
+
 Basic chat:
 ```bash
-go run main.go "Your message here"
+deepseek "Your message here"
 ```
 
 Create new conversation:
 ```bash
-go run main.go -new "Start new chat"
+deepseek -new "Start new chat"
 ```
 
 Use specific chat ID:
 ```bash
-go run main.go -chat abc123 "Continue specific chat"
+deepseek -chat abc123 "Continue specific chat"
 ```
 
 ## Features
@@ -42,16 +43,14 @@ Download the latest binary for your platform from the [releases page](https://gi
 
 ```bash
 # Linux AMD64
-curl -LO $(curl -s https://api.github.com/repos/asdf8601/deepseek/releases/latest | grep browser_download_url | grep linux_amd64 | cut -d '"' -f 4)
-sudo mv deepseek-linux-amd64 /usr/local/bin/deepseek
+curl -o deepseek.tar.gz -L $(curl -s https://api.github.com/repos/asdf8601/deepseek/releases/latest | grep browser_download_url | grep linux_amd64 | cut -d '"' -f 4)
 
 # macOS AMD64
-curl -LO $(curl -s https://api.github.com/repos/asdf8601/deepseek/releases/latest | grep browser_download_url | grep darwin_amd64 | cut -d '"' -f 4)
-chmod +x deepseek-darwin-amd64
-sudo mv deepseek-darwin-amd64 /usr/local/bin/deepseek
+curl -o deepseek.tar.gz -L $(curl -s https://api.github.com/repos/asdf8601/deepseek/releases/latest | grep browser_download_url | grep darwin_amd64 | cut -d '"' -f 4)
 
 # macOS ARM64 (Apple Silicon)
-curl -LO $(curl -s https://api.github.com/repos/asdf8601/deepseek/releases/latest | grep browser_download_url | grep darwin_arm64 | cut -d '"' -f 4)
-chmod +x deepseek-darwin-arm64
-sudo mv deepseek-darwin-arm64 /usr/local/bin/deepseek
+curl -o deepseek.tar.gz -L $(curl -s https://api.github.com/repos/asdf8601/deepseek/releases/latest | grep browser_download_url | grep darwin_arm64 | cut -d '"' -f 4)
+
+tar -xzf deepseek.tar.gz
+sudo mv deepseek ~/.local/bin/
 ```
