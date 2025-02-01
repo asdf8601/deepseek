@@ -28,9 +28,14 @@ type column struct {
 	getValue func(asterisk string, chatId string, age string, created string, lastMsg string) string
 }
 
+const (
+	STATUS_URL = "https://status.deepseek.com/api/v2/status.json"
+	CHAT_URL   = "https://api.deepseek.com/v1/chat/completions"
+	MODELS_URL = "https://api.deepseek.com/v1/models"
+)
+
 func checkServiceStatus() {
-	url := "https://status.deepseek.com/api/v2/status.json"
-	resp, err := http.Get(url)
+	resp, err := http.Get(STATUS_URL)
 	if err != nil {
 		fmt.Println("Error fetching service status:", err)
 		return
@@ -163,11 +168,17 @@ func listChats() {
 
 }
 
+const (
+	API_KEY = "DEEPSEEK_API_KEY"
+	ROLE    = "DEEPSEEK_ROLE"
+	HISTORY = "DEEPSEEK_HISTORY"
+)
+
 var (
-	chatHistory = make(map[string]Chat)
-	mutex       = &sync.Mutex{}
+	chatHistory (map[string]Chat)
 	historyFile string
 	lastChatID  string
+	mutex       = &sync.Mutex{}
 )
 
 type Chat struct {
@@ -183,18 +194,16 @@ type Config struct {
 var checkStatus *bool
 
 func init() {
+}
+
+func loadHistory() {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Println("Error getting home directory:", err)
 		return
 	}
+	historyFile = filepath.Join(homeDir, HISTORY)
 
-	checkStatus = flag.Bool("status", false, "Check DeepSeek service status")
-	historyFile = filepath.Join(homeDir, ".deepseek_history.json")
-	loadHistory(historyFile)
-}
-
-func loadHistory(historyFile string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -278,23 +287,39 @@ func generateChatID() string {
 	return hex.EncodeToString(b)
 }
 
+// Show help message
+func showHelp() {
+	fmt.Println("deepseek cli")
+	fmt.Println("\nUsage:")
+	fmt.Println("  deepseek [flags] <prompt>")
+	fmt.Println("\nFlags:")
+	flag.PrintDefaults()
+}
+
+// Main function
 func main() {
+
 	// Define flags
-	model := flag.String("model", "deepseek-chat", "Model to use (default: deepseek-chat)")
 	chatID := flag.String("chat", "", "Conversation ID (optional, generates one if not provided)")
-	newChat := flag.Bool("new", false, "Create a new conversation")
+	checkModels := flag.Bool("models", false, "List available Deepseek models")
+	checkStatus = flag.Bool("status", false, "Check DeepSeek service status")
 	debug := flag.Bool("debug", false, "Enable debug logging")
 	listChatsFlag := flag.Bool("ls", false, "List all chats and their last message")
-	checkModels := flag.Bool("models", false, "List available Deepseek models")
+	memoryLimit := flag.Int("memory", 10, "Number of messages to include in the memory (default: 10)")
+	model := flag.String("model", "deepseek-chat", "Model to use (default: deepseek-chat)")
+	newChat := flag.Bool("new", false, "Create a new conversation")
 	removeChat := flag.String("rm", "", "Remove chats older than the specified duration (e.g., 10d) or by ID")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
-	memoryLimit := flag.Int("memory", 10, "Number of messages to include in the memory (default: 10)")
+	help := flag.Bool("help", false, "Enable verbose logging")
 	flag.Parse()
+
 	// Check if the -status flag was passed
 	if *checkStatus {
 		checkServiceStatus()
 		return
 	}
+
+	// Check if the -models flag was passed
 	if *checkModels {
 		listDeepseekModels()
 		return
@@ -314,9 +339,9 @@ func main() {
 	}
 
 	// Read API token from environment variable
-	apiKey := os.Getenv("DEEPSEEK_API_KEY")
+	apiKey := os.Getenv(API_KEY)
 	if apiKey == "" {
-		fmt.Println("Error: DEEPSEEK_API_KEY environment variable is not set.")
+		fmt.Printf("Error: %s environment variable is not set.\n", API_KEY)
 		return
 	}
 
@@ -335,17 +360,19 @@ func main() {
 	lastChatID = *chatID
 
 	// Get user prompt
-	if len(flag.Args()) == 0 {
-		fmt.Println("Error: You must provide a prompt as an argument.")
+	if *help || (len(flag.Args()) == 0) {
+		showHelp()
 		return
 	}
+
 	prompt := flag.Args()[0]
+	loadHistory()
 
 	// Get chat history for this chat-id
 	mutex.Lock()
 	chat, exists := chatHistory[*chatID]
 	if !exists {
-		sys_content := os.Getenv("DEEPSEEK_ROLE")
+		sys_content := os.Getenv(ROLE)
 		if sys_content == "" {
 			sys_content = "You are a helpful assistant. Be concise."
 		}
@@ -395,8 +422,7 @@ func main() {
 	}
 
 	// Create HTTP request
-	url := "https://api.deepseek.com/v1/chat/completions"
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", CHAT_URL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return
@@ -515,8 +541,7 @@ func listDeepseekModels() {
 	}
 
 	// Create a simple request to check models endpoint
-	url := "https://api.deepseek.com/v1/models"
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", MODELS_URL, nil)
 	if err != nil {
 		return
 	}
